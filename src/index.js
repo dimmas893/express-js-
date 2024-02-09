@@ -6,9 +6,13 @@ const app = express();
 
 // Memuat variabel lingkungan dari file .env
 require("dotenv").config();
-
+// console.log(process.env.DB_HOST);
+// console.log(process.env.DB_USERNAME);
+// console.log(process.env.DB_PASSWORD);
+// console.log(process.env.DB_NAME);
 // Mengimpor rute pengguna
 const usersRoute = require("./routes/users");
+const authRouter = require("./routes/auth");
 
 // Tentukan port server, menggunakan variabel lingkungan PORT jika ada, atau default ke 4000
 const PORT = process.env.PORT || 4000;
@@ -26,6 +30,7 @@ app.use(logMiddleware);
 app.use(express.json());
 
 // Menggunakan awalan "/users" untuk rute terkait pengguna
+app.use("/auth", authRouter);
 app.use("/users", usersRoute);
 
 // Memulai server dan mendengarkan pada port yang ditentukan

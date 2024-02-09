@@ -1,6 +1,7 @@
 const userModel = require("../model/users");
 const paginateHelper = require("../helpers/paginate");
 const errorHelper = require("../helpers/error");
+const auth = require("../helpers/auth");
 const getUsers = async (req, res) => {
   try {
     const { searchTerm, page, pageSize, startIndex, endIndex } =
@@ -22,7 +23,13 @@ const getUsers = async (req, res) => {
     errorHelper.handleServerError(res, error);
   }
 };
-
+const authController = async(req, res, next)=>{
+  try {
+    return await userModel.authModel(req, res, next);
+  } catch (error) {
+    errorHelper.handleServerError(res, error);
+  }
+};
 const createNewUsers = async (req, res) => {
   const { body } = req;
   try {
@@ -35,6 +42,21 @@ const createNewUsers = async (req, res) => {
     errorHelper.handleServerError(res, error);
   }
 };
+
+
+const login = async (req, res) => {
+  const { body } = req;
+  try {
+    const data =  await userModel.login(body);
+    res.json({
+      message: "login berhasil",
+      data: data,
+    });
+  } catch (error) {
+    errorHelper.handleServerError(res, error);
+  }
+};
+
 
 const updateUsers = async (req, res) => {
   const { id } = req.params;
@@ -98,4 +120,6 @@ module.exports = {
   updateUsers,
   deleteUsers,
   getAllUsersAndGeneratePDF,
+  login,
+  authController
 };

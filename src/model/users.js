@@ -1,6 +1,10 @@
 const pull = require("../config/database");
 const errorHelper = require("../helpers/error");
 const pdfGenerator = require("../helpers/pdfGenerator");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const auth = require("../helpers/auth");
+
 const getAllUsers = (searchTerm) => {
   try {
     let sqlQuery = "SELECT * FROM users";
@@ -18,15 +22,66 @@ const getAllUsers = (searchTerm) => {
   }
 };
 
-const createNewUser = (body) => {
-  //cara ini rentan sql injegtion
-  //   const sqlQuery = `INSERT INTO users (nama, email) VALUES ('${body.nama}' , '${body.email}')`;
-  //   return pull.execute(sqlQuery);
+const authModel = (req, res, next) => {
+  try {
+    return auth.authenticateToken(req, res, next);
+  } catch (error) {
+    // console.error("Error in getAllUsers:", error);
+    errorHelper.handleServerError(res, error);
+  }
+};
 
-  //ini cara yang lebih efektif dan aman
-  const sqlQuery = "INSERT INTO users (nama, email) VALUES (?, ?)";
-  const values = [body.nama, body.email];
+async function getUserByEmail(email) {
+  try {
+    // Menjalankan query untuk mendapatkan pengguna berdasarkan email
+    const sqlQuery = "SELECT * FROM users WHERE email = ?";
 
+    const values = [email];
+
+    return pull.execute(sqlQuery, values);
+  } catch (error) {
+    console.error("Error querying database:", error);
+    throw error; // Melemparkan error ke level yang lebih tinggi
+  }
+}
+const login = async (body) => {
+  const { email, password } = body;
+
+  try {
+    const [userData] = await getUserByEmail(email);
+
+    if (!userData || !userData.length) {
+      return { error: "Email tidak ditemukan" };
+    }
+
+    const user = userData[0]; // Assuming user data is an array and we're interested in the first entry
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return { error: "Password salah" };
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, "secretkey", {
+      expiresIn: "1h",
+    });
+
+    return { token };
+  } catch (error) {
+    console.error("Error in login:", error);
+    throw error;
+  }
+};
+
+const createNewUser = async (body) => {
+  // Hash password
+  const hashedPassword = await bcrypt.hash(body.password, 10); // Ganti '10' dengan tingkat salt yang diinginkan
+
+  // Persiapkan query untuk menyimpan data pengguna baru
+  const sqlQuery = "INSERT INTO users (nama, email, password) VALUES (?, ?, ?)";
+  const values = [body.nama, body.email, hashedPassword]; // Gunakan hashedPassword
+
+  // Eksekusi query
   return pull.execute(sqlQuery, values);
 };
 
@@ -75,4 +130,6 @@ module.exports = {
   updateUserById,
   deleteUserById,
   generatePDF,
+  login,
+  authModel,
 };
