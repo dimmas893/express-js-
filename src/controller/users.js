@@ -23,7 +23,7 @@ const getUsers = async (req, res) => {
     errorHelper.handleServerError(res, error);
   }
 };
-const authController = async(req, res, next)=>{
+const authController = async (req, res, next) => {
   try {
     return await userModel.authModel(req, res, next);
   } catch (error) {
@@ -43,11 +43,10 @@ const createNewUsers = async (req, res) => {
   }
 };
 
-
 const login = async (req, res) => {
   const { body } = req;
   try {
-    const data =  await userModel.login(body);
+    const data = await userModel.login(body);
     res.json({
       message: "login berhasil",
       data: data,
@@ -56,7 +55,6 @@ const login = async (req, res) => {
     errorHelper.handleServerError(res, error);
   }
 };
-
 
 const updateUsers = async (req, res) => {
   const { id } = req.params;
@@ -121,5 +119,5 @@ module.exports = {
   deleteUsers,
   getAllUsersAndGeneratePDF,
   login,
-  authController
+  authController,
 };
